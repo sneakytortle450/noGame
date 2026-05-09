@@ -13,57 +13,61 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
+import java.util.Random;
+
+
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends ApplicationAdapter {
     private Stage stage;
     private Skin skin;
+    private Popup popup;
+
+    class Popup {
+        float timeLeft;
+        TextButton button;
+        Window window;
+        Popup(){
+            this.timeLeft = 5;
+            this.window = new Window("Example screen", skin, "border");
+            window.defaults().pad(4f);
+            window.add("This is a simple Scene2D view.").row();
+            this.button = new TextButton(((int)this.timeLeft)+"", skin);
+            button.pad(8f);
+            button.addListener(new ChangeListener() {
+                @Override
+                public void changed(final ChangeEvent event, final Actor actor) {
+                    timeLeft = 5;
+                    Random rand = new Random();
+                    window.setPosition(rand.nextInt((int)window.getWidth()*8),rand.nextInt((int)window.getHeight()*8));
+                }
+            });
+            window.add(button);
+            window.pack();
+            // We round the window position to avoid awkward half-pixel artifacts.
+            // Casting using (int) would also work.
+            window.setPosition(MathUtils.roundPositive(stage.getWidth() / 2f - window.getWidth() / 2f),
+                MathUtils.roundPositive(stage.getHeight() / 2f - window.getHeight() / 2f));
+            window.addAction(Actions.sequence(Actions.alpha(0f), Actions.fadeIn(1f)));
+            stage.addActor(window);
+        }
+
+        boolean update(float dt){
+            timeLeft -= dt;
+            this.button.setText(((int)timeLeft)+"");
+            if(timeLeft <= 0){
+              window.remove();
+              return true;
+            }
+            return false;
+        }
+    }
 
     @Override
     public void create() {
         stage = new Stage(new FitViewport(640, 480));
         skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
-        Window window = new Window("Example screen", skin, "border");
-        window.defaults().pad(4f);
-        window.add("This is a simple Scene2D view.").row();
-        final TextButton button = new TextButton("Click me!", skin);
-        button.pad(8f);
-        button.addListener(new ChangeListener() {
-            @Override
-            public void changed(final ChangeEvent event, final Actor actor) {
-                button.setText("Clicked.");
-            }
-        });
-        window.add(button);
-        window.pack();
-        // We round the window position to avoid awkward half-pixel artifacts.
-        // Casting using (int) would also work.
-        window.setPosition(MathUtils.roundPositive(stage.getWidth() / 2f - window.getWidth() / 2f),
-            MathUtils.roundPositive(stage.getHeight() / 2f - window.getHeight() / 2f));
-        window.addAction(Actions.sequence(Actions.alpha(0f), Actions.fadeIn(1f)));
-        stage.addActor(window);
-
-        Window window2 = new Window("Example screen", skin, "border");
-        window2.defaults().pad(4f);
-        window2.add("This is a simple Scene2D view.").row();
-        final TextButton button2 = new TextButton("Click me!", skin);
-        button2.pad(8f);
-        button2.addListener(new ChangeListener() {
-            @Override
-            public void changed(final ChangeEvent event, final Actor actor) {
-                button2.setText("Clicked.");
-
-                window.remove();
-            }
-        });
-        window2.add(button2);
-        window2.pack();
-        // We round the window position to avoid awkward half-pixel artifacts.
-        // Casting using (int) would also work.
-        window2.setPosition(100,100);
-        window2.addAction(Actions.sequence(Actions.alpha(0f), Actions.fadeIn(1f)));
-        stage.addActor(window2);
-
+        popup = new Popup();
 
         Gdx.input.setInputProcessor(stage);
     }
@@ -73,6 +77,31 @@ public class Main extends ApplicationAdapter {
         ScreenUtils.clear(0f, 0f, 0f, 1f);
         stage.act(Gdx.graphics.getDeltaTime());
         stage.draw();
+        boolean gameOver = popup.update(Gdx.graphics.getDeltaTime());
+        if (gameOver){
+            Window endWindow = new Window("GameOver Screen", skin, "border");
+            endWindow.defaults().pad(4f);
+            endWindow.add("This is a simple Scene2D view.").row();
+            TextButton button = new TextButton("restart", skin);
+            button.pad(8f);
+            button.addListener(new ChangeListener() {
+                @Override
+                public void changed(final ChangeEvent event, final Actor actor) {
+                    endWindow.remove();
+                    popup = new Popup();
+                }
+            });
+            endWindow.add(button);
+            endWindow.pack();
+            // We round the window position to avoid awkward half-pixel artifacts.
+            // Casting using (int) would also work.
+            endWindow.setPosition(MathUtils.roundPositive(stage.getWidth() / 2f - endWindow.getWidth() / 2f),
+                MathUtils.roundPositive(stage.getHeight() / 2f - endWindow.getHeight() / 2f));
+            endWindow.addAction(Actions.sequence(Actions.alpha(0f), Actions.fadeIn(1f)));
+            stage.addActor(endWindow);
+        }
+        //loop over windows
+        //check for time under 1
     }
 
     @Override
