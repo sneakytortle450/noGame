@@ -23,12 +23,16 @@ public class Main extends ApplicationAdapter {
     private Popup popup;
 
     private Window window = null;
+
+    private int score = 0;
+    private int highScore = 0;
     class Popup {
         float timeLeft;
         TextButton button;
         Window window;
+
         Popup(){
-            this.timeLeft = 6;
+            this.timeLeft = 7;
             this.window = new Window("Example screen", skin, "border");
             window.defaults().pad(4f);
 
@@ -38,9 +42,10 @@ public class Main extends ApplicationAdapter {
             button.addListener(new ChangeListener() {
                 @Override
                 public void changed(final ChangeEvent event, final Actor actor) {
-                    timeLeft = 3;
+                    timeLeft = 4;
                     Random rand = new Random();
                     window.setPosition(rand.nextInt((int)window.getWidth()*8),rand.nextInt((int)window.getHeight()*8));
+                    score++;
                 }
             });
             window.add(button);
@@ -84,6 +89,11 @@ public class Main extends ApplicationAdapter {
             this.window = new Window("  Game Over", skin, "border");
             window.defaults().pad(4f);
             window.add("    You died >:D    ").row();
+            window.add("you closed: " + score +" windows");
+            if (score > highScore){
+                highScore = score;
+            }
+            window.add("Highscore: " + highScore);
             TextButton button = new TextButton("restart", skin);
             button.pad(8f);
             button.addListener(new ChangeListener() {
@@ -92,6 +102,7 @@ public class Main extends ApplicationAdapter {
                     window.remove();
                     window = null;
                     popup = new Popup();
+                    score = 0;
                 }
             });
             window.add(button);
@@ -103,6 +114,7 @@ public class Main extends ApplicationAdapter {
             window.addAction(Actions.sequence(Actions.alpha(0f), Actions.fadeIn(1f)));
             stage.addActor(window);
         }
+
         //loop over windows
         //check for time under 1
     }
